@@ -1,0 +1,140 @@
+---
+title: "maps"
+author: "Silvina Pugliese"
+date: "30/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(rgdal)
+# to run readOGR
+
+library(sf)
+# to run st_as_sf
+
+# Mapping
+library(leaflet)
+library(leaflet.extras)
+library(leaflegend)
+
+library(shinyscreenshot)
+
+```
+
+```{r}
+TAs <- readOGR("data/TLAs2015", "territorial-authority-2015-v1-00-clipped", verbose=FALSE)
+```
+
+```{r}
+TAs = st_as_sf(TAs)
+TAs <- st_transform(TAs, crs = 4326)
+```
+
+```{r}
+regions <- readOGR("data/spatial", "regional_council_2018", verbose=FALSE)
+
+regions = st_as_sf(regions)
+
+# regions = regions %>%
+#   filter(!REGC2018_1 %in% c("Area Outside Region"))
+
+```
+
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  
+  h2("Territorial authorities"),
+  leafletOutput("map_TAs"),
+  h2("Regional councils"),
+  leafletOutput("map_regions")
+  
+)
+
+server <- function(input, output, session) {
+  
+  output$map_TAs <- renderLeaflet({
+    
+    leaflet(options = leafletOptions(
+    attributionControl = FALSE,
+    zoomControl = FALSE,
+    dragging = TRUE, 
+    
+    )) %>%
+    
+    fitBounds(
+      lng1 = 166.34,
+      lat1 = -47.58,
+      lng2 = 178.78,
+      lat2 = -33.84
+    ) %>%
+    
+    setView(
+        lat = -40.8,
+        lng =  172.5,
+        zoom = 5.2
+      ) %>%
+    
+    addPolygons(
+      data = TAs,
+      fillColor = "#0099BC",
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      fillOpacity = 1.0
+      ) %>%
+      
+      setMapWidgetStyle(style = list(background = "transparent"))
+    
+  })
+    
+    output$map_regions <- renderLeaflet({
+    
+    leaflet(options = leafletOptions(
+    attributionControl = FALSE,
+    zoomControl = FALSE,
+    dragging = TRUE, 
+    
+    )) %>%
+    
+    fitBounds(
+      lng1 = 166.34,
+      lat1 = -47.58,
+      lng2 = 178.78,
+      lat2 = -33.84
+    ) %>%
+    
+    setView(
+        lat = -40.8,
+        lng =  172.5,
+        zoom = 5.2
+      ) %>%
+    
+    addPolygons(
+      data = regions,
+      fillColor = "#FF8C00",
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      fillOpacity = 1.0
+      ) %>%
+      
+      setMapWidgetStyle(style = list(background = "transparent"))
+      
+  })
+    
+  #   screenshot(
+  #   scale = 2,
+  #   filename = "screenshot",
+  #   timer = 10
+  # )
+
+}
+
+shinyApp(ui, server)
+```
+
